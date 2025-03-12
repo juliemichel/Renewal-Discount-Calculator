@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 0;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #444;
+        }
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+        .form-field {
+            flex: 1;
+            min-width: 150px;
+            padding: 0 10px;
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .result {
+            background-color: #f8f9fa;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+        }
+        .instructions {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #0066cc;
+        }
+        .instructions ol {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+        .error {
+            color: #d9534f;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Discount Calculator</h1>
+        
+        <div id="errorMessage" style="color: #d9534f; padding: 10px; margin-bottom: 15px; background-color: #f8d7da; border-radius: 4px; display: none;"></div>
+        
+        <div class="section">
+            <h2>Current Values</h2>
+            <div class="form-group">
+                <div class="form-field">
+                    <label for="currentSalesPrice">Sales Price ($)</label>
+                    <input type="number" id="currentSalesPrice" min="0" step="0.01" placeholder="e.g., 1000">
+                </div>
+                <div class="form-field">
+                    <label for="currentNetPrice">Net Price ($)</label>
+                    <input type="number" id="currentNetPrice" min="0" step="0.01" placeholder="e.g., 800">
+                </div>
+                <div class="form-field">
+                    <label for="currentDiscount">Discount (%)</label>
+                    <input type="number" id="currentDiscount" min="0" max="100" step="0.01" placeholder="e.g., 20">
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>New Values</h2>
+            <div class="form-group">
+                <div class="form-field">
+                    <label for="newNetPrice">New Net Price ($)</label>
+                    <input type="number" id="newNetPrice" min="0" step="0.01" placeholder="e.g., 750">
+                </div>
+                <div class="form-field">
+                    <label for="newDiscount">New Discount (%)</label>
+                    <div id="newDiscount" class="result">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h3>How to use:</h3>
+            <ol>
+                <li>Enter the current sales price</li>
+                <li>Enter either the current net price or discount percentage</li>
+                <li>Enter the new net price</li>
+                <li>The new discount percentage will be calculated automatically</li>
+            </ol>
+        </div>
+        
+        <div class="footer">
+            <p>Created for ActivTrak Commercial Customer Success Team</p>
+        </div>
+    </div>
+
+    <script>
+        // Get elements
+        const currentSalesPrice = document.getElementById('currentSalesPrice');
+        const currentNetPrice = document.getElementById('currentNetPrice');
+        const currentDiscount = document.getElementById('currentDiscount');
+        const newNetPrice = document.getElementById('newNetPrice');
+        const newDiscountDisplay = document.getElementById('newDiscount');
+        const errorMessage = document.getElementById('errorMessage');
+        
+        // Add event listeners
+        currentSalesPrice.addEventListener('input', calculateAll);
+        currentNetPrice.addEventListener('input', calculateFromNetPrice);
+        currentDiscount.addEventListener('input', calculateFromDiscount);
+        newNetPrice.addEventListener('input', calculateNewDiscount);
+        
+        // Calculate current discount from net price
+        function calculateFromNetPrice() {
+            if (currentSalesPrice.value && currentNetPrice.value) {
+                const salesPrice = parseFloat(currentSalesPrice.value);
+                const netPrice = parseFloat(currentNetPrice.value);
+                
+                if (salesPrice > 0 && netPrice >= 0) {
+                    if (netPrice > salesPrice) {
+                        showError('Net price cannot be greater than sales price');
+                        currentDiscount.value = '';
+                    } else {
+                        hideError();
+                        const discountAmount = salesPrice - netPrice;
+                        const discountPercentage = (discountAmount / salesPrice) * 100;
+                        
+                        // Update discount without triggering the event
+                        currentDiscount.value = discountPercentage.toFixed(2);
+                    }
+                }
+            }
+            calculateNewDiscount();
+        }
+        
+        // Calculate net price from discount
+        function calculateFromDiscount() {
+            if (currentSalesPrice.value && currentDiscount.value) {
+                const salesPrice = parseFloat(currentSalesPrice.value);
+                const discountPercentage = parseFloat(currentDiscount.value);
+                
+                if (salesPrice > 0 && discountPercentage >= 0 && discountPercentage <= 100) {
+                    hideError();
+                    const discountAmount = (discountPercentage / 100) * salesPrice;
+                    const netPrice = salesPrice - discountAmount;
+                    
+                    // Update net price without triggering the event
+                    currentNetPrice.value = netPrice.toFixed(2);
+                } else if (discountPercentage > 100) {
+                    showError('Discount percentage cannot exceed 100%');
+                }
+            }
+            calculateNewDiscount();
+        }
+        
+        // Calculate new discount based on sales price and new net price
+        function calculateNewDiscount() {
+            if (currentSalesPrice.value && newNetPrice.value) {
+                const salesPrice = parseFloat(currentSalesPrice.value);
+                const netPrice = parseFloat(newNetPrice.value);
+                
+                if (salesPrice > 0 && netPrice >= 0) {
+                    if (netPrice > salesPrice) {
+                        showError('New net price cannot be greater than sales price');
+                        newDiscountDisplay.textContent = '-';
+                    } else {
+                        hideError();
+                        const discountAmount = salesPrice - netPrice;
+                        const discountPercentage = (discountAmount / salesPrice) * 100;
+                        newDiscountDisplay.textContent = discountPercentage.toFixed(2) + '%';
+                    }
+                } else {
+                    newDiscountDisplay.textContent = '-';
+                }
+            } else {
+                newDiscountDisplay.textContent = '-';
+            }
+        }
+        
+        // Run all calculations
+        function calculateAll() {
+            // If discount is filled but net price isn't, calculate net price
+            if (currentDiscount.value && !currentNetPrice.value) {
+                calculateFromDiscount();
+            } 
+            // If net price is filled but discount isn't, calculate discount
+            else if (currentNetPrice.value && !currentDiscount.value) {
+                calculateFromNetPrice();
+            }
+            // Otherwise, just calculate the new discount
+            else {
+                calculateNewDiscount();
+            }
+        }
+        
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+        
+        // Hide error message
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
